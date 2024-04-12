@@ -7,6 +7,9 @@ import hashlib
 import os
 from flask_cors import CORS
 from dotenv import load_dotenv
+from flask_socketio import SocketIO, send, emit, join_room, leave_room, close_room
+from words import word_list
+import random
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -16,6 +19,129 @@ load_dotenv()
 
 secret_key = os.getenv('SECRET_KEY')
 database_url = os.getenv('DATABASE_URL')
+
+sio = SocketIO(app, cors_allowed_origins=["http://localhost:3000"])
+rooms = {}
+results = {}
+modes = {}
+
+def generate_words(n):
+    words = []
+    length = len(word_list)
+    for i in range(n):
+        words.append(word_list[random.randint(0, length-1)])
+    return words
+
+@sio.on("join-room")
+def handle_room_join(data):
+    room_id = data['roomId']
+    username = data['username']
+    host = False
+    join_room(room_id)
+    users = []
+    mode = "words"
+    limit = 15
+    if rooms.get(room_id):
+        rooms[room_id].append({"username": username, "host": False, "ready": False})
+        users = [[i["username"], i["ready"], i["host"]] for i in rooms[room_id]]
+        mode = modes[room_id]["mode"]
+        limit = modes[room_id]["limit"]
+    else:
+        host = True
+        rooms[room_id] = [{"username": username, "host": True, "ready": True}]
+        users = [[username, True, True]]
+        modes[room_id] = {"mode": "words", "limit": 15}
+    emit("room-joined", {"message": f"{username} joined the room", "username": username, "host": host, "success": True, "users": users, "mode": mode, "limit": limit}, to=room_id)
+    if host:
+        emit("room-host", {"message": "You are the host"}, to=request.sid)
+
+
+@sio.on("change-game-config")
+def handle_config_change(data):
+    room_id = data['roomId']
+    if not rooms.get(room_id):
+        emit("room-not-found", {"message": "No room found with the given id"}, to=request.sid)
+        return
+    emit("game-config-changed", {"mode": data['mode'], "limit": data['limit']}, to=room_id)
+
+
+@sio.on("leave-room")
+def handle_room_leave(data):
+    room_id = data['roomId']
+    username = data['username']
+    if not rooms.get(room_id):
+        emit("room-not-found", {"message": "No room found with the given id"}, to=request.sid)
+        return
+    leave_room(room_id)
+    if rooms.get(room_id):
+        for i in range(len(rooms[room_id])):
+            if rooms[room_id][i]["username"] == username:
+                rooms[room_id].pop(i)
+                users = [[i["username"], i["ready"], i["host"]] for i in rooms[room_id]]
+                emit("room-left", {"message": f"{username} left the room", "username": username, "users": users}, to=room_id)
+                return
+
+@sio.on("end-room")
+def handle_end_room(data):
+    room_id = data["roomId"]
+    if not rooms.get(room_id):
+        emit("room-not-found", {"message": "No room found with the given id"}, to=request.sid)
+        return
+    del rooms[room_id]
+    emit("room-ended", to=room_id)
+    close_room(room_id)
+
+@sio.on("ready")
+def user_ready(data):
+    room_id = data['roomId']
+    username = data['username']
+    if rooms.get(room_id):
+        for i in range(len(rooms[room_id])):
+            if rooms[room_id][i]["username"] == username:
+                rooms[room_id][i]["ready"] = True
+                users = [[i["username"], i["ready"], i["host"]] for i in rooms[room_id]]
+                emit("user-ready", {"message": f"{username} is ready", "username": username, "users": users}, to=room_id)
+                return
+
+@sio.on("game-start")
+def handle_start(data):
+    room_id = data['roomId']
+    game_mode = data['mode']
+    game_limit = int(data['limit'])
+    if game_mode == "words":
+        limit = game_limit
+    else:
+        limit = 100
+    all_ready = True
+    if rooms.get(room_id):
+        for i in rooms[room_id]:
+            if not i["ready"]:
+                all_ready = False
+                break
+        if all_ready:
+            emit("game-started", {"message": "Game has started", "words": generate_words(limit)}, to=room_id)
+        else:
+            emit("user-not-ready", {"message": "All users are not ready yet"}, to=request.sid)
+    emit("room-not-found", {"message": "No room found with the given id"})
+
+@sio.on("game-end")
+def handle_end(data):
+    room_id = data['roomId']
+    wpm = data['wpm']
+    accuracy = data['accuracy']
+    username = data['username']
+    if not rooms.get(room_id):
+        emit("room-not-found", {"message": "No room found with the given id"})
+        return
+    if not results.get(room_id):
+        results[room_id] = []
+    results[room_id].append({"username": username, "wpm": wpm, "accuracy": accuracy})
+    emit("leaderboard", {"data": sorted(results[room_id], key=lambda x: x["wpm"], reverse=True)}, to=room_id)
+    if len(results[room_id]) == len(rooms[room_id]):
+        close_room(room_id)
+
+
+
 
 def connect_to_database():
     try:
@@ -44,7 +170,7 @@ class RegisterResource(Resource):
         cursor.execute("SELECT * FROM users WHERE name = %s", (name,))
         user = cursor.fetchone()
         if user is not None:
-            return {"message": "User already exists"}, 400
+            return {"message": "Username is already taken"}, 400
 
         # Hash password
         password = hashlib.sha256(password.encode()).hexdigest()
@@ -138,11 +264,21 @@ class StatsResource(Resource):
             return {"message": "Error connecting to database"}, 500
 
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO stats (username, test_mode, test_limit, wpm, accuracy, test_time) VALUES (%s, %s, %s, %s, %s, %s)", (name, test_mode, test_limit, wpm, accuracy, test_time))
-        conn.commit()
-        cursor.close()
 
-        return {"message": "Result saved successfully"}, 201
+        try:
+            # Inserting data into the stats table and returning the UID of the inserted row
+            cursor.execute("INSERT INTO stats (username, test_mode, test_limit, wpm, accuracy, test_time) VALUES (%s, %s, %s, %s, %s, %s) RETURNING UID", (name, test_mode, test_limit, wpm, accuracy, test_time))
+            uid = cursor.fetchone()[0]  # Fetching the returned UID
+            conn.commit()
+            return {"UID": uid, "message": "Result saved successfully"}, 201  # Return the UID as a JSON response
+        except psycopg2.Error as e:
+            # Handling database errors
+            conn.rollback()
+            return {"message": "Database error: {}".format(e)}, 500
+        finally:
+            # Closing cursor and connection
+            cursor.close()
+            conn.close()
 
 class ProfileResource(Resource):
     def get(self):
@@ -228,11 +364,32 @@ class LeaderboardResource(Resource):
             "max_wpm": max_wpm
         }, 200
 
+class ResultResource(Resource):
+    def get(self):
+        result_id = request.args.get("id")
+        if not result_id:
+            return {"message": "Result id is required"}, 400
+        conn = connect_to_database()
+        if conn is None:
+            return {"message": "Error connecting to database"}, 500
+
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM stats WHERE UID = %s", result_id)
+        _result_data = cursor.fetchone()
+        if not _result_data:
+            return {"message": "Invalid result id"}, 400
+        result_data = [[_result_data[0], _result_data[1], _result_data[2], float(_result_data[3]), float(_result_data[4]), _result_data[5]]]
+        return {"message": "Result fetched successfully", "result": result_data}, 200
+
+
+
+
 api.add_resource(RegisterResource, '/register')
 api.add_resource(LoginResource, '/login')
 api.add_resource(StatsResource, '/stats')
 api.add_resource(ProfileResource, '/profile')
 api.add_resource(LeaderboardResource, '/leaderboard')
+api.add_resource(ResultResource, "/result")
 
 if __name__ == '__main__':
-    app.run()
+    sio.run(app, allow_unsafe_werkzeug=True, debug=True)
