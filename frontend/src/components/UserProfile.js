@@ -6,8 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// This is the profile page of a user
 function UserProfile(){
+    // set userData to null initially
     const [userData, setUserData] = useState(null)
+    // initialize best wpm data
     const [wpmData, setWpmData] = useState({
         "words 15": ["-", "-"],
         "words 30": ["-", "-"],
@@ -19,6 +22,8 @@ function UserProfile(){
         "time 90": ["-", "-"],
     })
     const navigate = useNavigate();
+
+    // on load, fetch the profile data from the server
     useEffect(() => {
         fetch("http://127.0.0.1:5000/profile", {
             credentials: "include",
@@ -36,6 +41,7 @@ function UserProfile(){
                     setWpmData(tempWpmData)
                 }
             })
+            // if the length is not 4, fill it upto 4
             if (data["recent_tests"].length !== 4){
                 let rem = 4 - data["recent_tests"].length;
                 for(let i=0;i<rem;i++){
@@ -46,6 +52,8 @@ function UserProfile(){
         })
         .catch(e => toast.error(e.toString()))
     }, [])
+
+    // logouts user
     function handleLogout(){
         window.localStorage.setItem("vt_login", "false")
         navigate("/")

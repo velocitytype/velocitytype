@@ -1,5 +1,6 @@
 import { generateNum, generateNumChars, generatePunctuationChars } from "./randomChars";
 
+// Word List used to generate words
 const wordList = [
     "ability",
     "able",
@@ -1956,6 +1957,7 @@ const wordList = [
   ];
 
 
+// generates an array of random words from the word list of length length
 const generate = (length) => {
     const sentences = [];
     for(let i=0;i<length;i++){
@@ -1964,6 +1966,7 @@ const generate = (length) => {
     return sentences
 }
 
+// generates array with numbers and symbols if required
 const generateSentence = (addNum, addPunctuation, length) => {
     var sentenceArr = generate(length)
     if (addNum){

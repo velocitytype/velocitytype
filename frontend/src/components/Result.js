@@ -1,6 +1,7 @@
 import React from "react";
 import '../style/profile.css';
 
+// This shows the result of a test, used in profile page of a user
 function Result({testMode, testLimit, testWpm, testAccuracy}){
     return (
         <div className="result">

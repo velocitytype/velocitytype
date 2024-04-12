@@ -1,6 +1,9 @@
 import React from "react";
 import Key from "./Key";
 import '../style/keyboard.css';
+
+// This is the on screen keyboard component
+
 function Keyboard({isActive, currKey}){
     return (
         <div className={isActive ? "keyboard" : "keyboard inactive"}>

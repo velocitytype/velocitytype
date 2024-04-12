@@ -1,3 +1,4 @@
+// Imports
 import React, { useEffect, useState, useMemo } from "react";
 import useSound from "use-sound";
 import '../style/input.css';
@@ -39,52 +40,64 @@ const Input = ({
   textInputRef,
   handleInputFocus,
 }) => {
+  // play used to play key taps
   const [play] = useSound(tap);
+  // the limit of the current test
   const [limitStart, setLimitStart] = useLocalValue(
     DEFAULT_COUNT_DOWN,
     "timer-constant"
   );
+  // number mode toggle
   const [numberMode, setNumberMode] = useLocalValue(
     false,
     NUMBER_KEY
   )
+  // symbol mode toggle
   const [symbolMode, setSymbolMode] = useLocalValue(
     false,
     SYMBOL_KEY
   )
+  // tab dialog toggle
   const [restartDialog, setRestartDialog] = useState(false);
 
+  // handles tab presses, opens dialog
   const tabEnterReset = (e) => {
+    // if tab or enter is pressed, reset the game
     if (e.keyCode === 13 || e.keyCode === 9) {
       e.preventDefault();
       setRestartDialog(false);
       reset(limitStart, numberMode, symbolMode, false);
     }
+    // if space is pressed, redo the game
     else if (e.keyCode === 32) {
       e.preventDefault();
       setRestartDialog(false);
       reset(limitStart, numberMode, symbolMode, true);
+      // if k is pressed, toggle on-screen keyboard
     } else if (e.keyCode === 75) {
       e.preventDefault();
       setRestartDialog(false)
       setKeyboardActive(!keyboardActive);
     } else {
+      // else close the dialog
       e.preventDefault();
       setRestartDialog(false);
     }
   };
+  // handles tab press
   const handleTab = () => {
     setRestartDialog(true);
   };
 
+  // current words list used in test
   const [wordsList, setWordsList] = useState(() => {
       return generateSentence(numberMode, symbolMode, DEFAULT_WORDS_COUNT);
   });
-
+  // current words memo
   const words = useMemo(() => {
     return wordsList.map((e) => e);
   }, [wordsList]);
-
+  // create an array of length == words.length and fills it with 0's
   const wordRefs = useMemo(
     () =>
       Array(words.length)
@@ -93,35 +106,60 @@ const Input = ({
     [words]
   );
 
+  // set up current limit
   const [limit, setLimit] = useState(limitStart);
+  // set up interval id, used for timed mode
   const [intervalId, setIntervalId] = useState(null);
+  // set up current status of game
   const [status, setStatus] = useState("waiting");
+  // set up current input of the user
   const [currInput, setCurrInput] = useState("");
+  // the index of the word user has to type
   const [currWordIdx, setCurrWordIdx] = useState(0);
+  // the index of the character of the current word that the user has to type
   const [currCharIdx, setCurrCharIdx] = useState(-1);
+  // prevInp is used to handle space key taps and set data accordingly
   const [prevInp, setPrevInp] = useState("");
+  // correct is the set of correctly typed words by the user
   const [correct, setCorrect] = useState(new Set());
+  // incorrect is the set of incorrectly typed words by the user
   const [incorrect, setIncorrect] = useState(new Set());
+  // history of words
   const [wordsHistory, setWordsHistory] = useState({});
+  // raw wpm of the user, every stroke counts
   const [raw, setRaw] = useState(0);
+  // wpmStrokes is the strokes when user types correctly
   const [wpmStrokes, setWpmStrokes] = useState(0);
+  // wpm is the current wpm
   const [wpm, setWpm] = useState(0);
+  // charStats contains correct, incorrect, missing, extra characters input by the user
   const [charStats, setCharStats] = useState([]);
+  // data related to each char
   const [charData, setCharData] = useState({});
   const keyString = currWordIdx + "." + currCharIdx;
+  // the curr character that user has to type
   const [currChar, setCurrChar] = useState("");
+  // the current game mode (initally words)
   const [currMode, setCurrMode] = useState("words")
+  // wordsStart is the time when user starts typing the words in words mode, used for wpm counting
   const [wordsStart, setWordsStart] = useState(0)
+  // soundMode toggles key tap plays
   const [soundMode, setSoundMode] = useLocalValue(false, "sound");
+  // toggles if the on-screen keyboard is active or not
   const [keyboardActive, setKeyboardActive] = useState(false)
+  // current key pressed by the user to show on on-screen keyboard
   const [currKey, setCurrKey] = useState("")
+  // remaining stats class toggle
   const [remStatsClass, setRemStatsClass] = useState("rem-stats-wrapper")
+  // resultId is the unique id of the result after test
   const [resultId, setResultId] = useState(null)
 
+  // toggles soundMode (on/off)
   const toggleSoundMode = () => {
     setSoundMode(!soundMode);
   };
 
+  // whenever words are about to end, generate more words
   useEffect(() => {
     if (currWordIdx === DEFAULT_WORDS_COUNT - 1) {
         const generatedEng = generateSentence(
@@ -134,6 +172,7 @@ const Input = ({
     if (currWordIdx === limitStart-1 && currCharIdx + 2 === words[currWordIdx].length) return
   }, [currWordIdx, wordRefs, numberMode, symbolMode]);
 
+  // if mode is words, limit = words else limit = 100
   useEffect(() => {
     if (currMode === "words"){
       const generatedEng = generateSentence(
@@ -152,6 +191,7 @@ const Input = ({
     }
   }, [currMode, limitStart])
 
+  // resets all game data and game
   const reset = (newlimit, newnumberMode, newsymbolMode, isRedo, isCustom=false) => {
     setStatus("waiting");
     if (!isRedo) {
@@ -187,6 +227,7 @@ const Input = ({
     }
   };
 
+  // starts the game
   const start = () => {
     if (status === "finished") {
       setCurrInput("");
@@ -206,6 +247,7 @@ const Input = ({
       setStatus("started");
       setRemStatsClass("rem-stats-wrapper active")
       if (currMode === "time"){
+        // set interval id to use later if mode is timed
         let intervalId = setInterval(() => {
           setLimit((prevlimit) => {
             if (prevlimit === 0) {
@@ -256,6 +298,7 @@ const Input = ({
     }
   };
 
+  // handles input in the hidden input
   const handleInput = (e) => {
     if (status === "finished") {
       return;
@@ -265,6 +308,7 @@ const Input = ({
     setWordsHistory(wordsHistory);
   };
 
+  // whenever limit changes, update the wpm
   useEffect(() => {
     if (limitStart == limit) return
     if (wpmStrokes !== 0) {
@@ -274,10 +318,12 @@ const Input = ({
     }
   }, [limit])
 
+  // if status is finished, calculate the results and send the results to the server if user if logged in
   useEffect(() => {
     if (status === "finished"){
       setKeyboardActive(false)
       setRemStatsClass("rem-stats-wrapper")
+      // if user is not logged in, return
       if (window.localStorage.getItem("vt_login") !== "true"){
         return;
       }
@@ -309,6 +355,7 @@ const Input = ({
           toast.warning("Login again to save your results")
           return
         }
+        // set result id to the unique id received
         setResultId(data.UID)
         toast.success("Result saved successfully")
       })
@@ -316,7 +363,9 @@ const Input = ({
     }
   }, [status])
 
+  // handles each key press
   const handleKeyDown = (e) => {
+    // if game is not finished and soundMode is on, play key tap
     if (status !== "finished" && soundMode) {
       play();
     }
@@ -324,11 +373,13 @@ const Input = ({
     const keyCode = e.keyCode;
     setCurrKey(key)
     if (status === "started") {
+      // each stroke counts for raw
       setRaw(raw + 1);
       if(words[currWordIdx][currCharIdx+1] == key){
         setWpmStrokes(wpmStrokes + 1);
       }
     }
+    // checks if the character entered is the last character of words, to toggle statistics 
     if (status === "started" && currMode === "words"){
       if ((currWordIdx === words.length - 1 && currCharIdx + 2 === words[currWordIdx].length) || (currWordIdx === words.length)){
         const extraChars = Object.values(charData)
@@ -371,6 +422,7 @@ const Input = ({
       }
     }
 
+    // if tab is pressed, handle it
     if (keyCode === 9) {
       e.preventDefault();
       handleTab();
@@ -382,10 +434,12 @@ const Input = ({
       setPrevInp("");
       return;
     }
+    // if game is not started, start the game
     if (status !== "started" && status !== "finished") {
       start();
     }
 
+    // if space is pressed, move on the next word
     if (keyCode === 32) {
       const prev = checkPrev();
       if (prev === true || prev === false) {
@@ -396,7 +450,7 @@ const Input = ({
       } else {
         return;
       }
-
+      // if backspace is pressed, remove the character
     } else if (keyCode === 8) {
       delete charData[keyString];
       setRaw(raw - 1)
@@ -421,6 +475,7 @@ const Input = ({
     }
   };
 
+  // gets extra typed (error) characters name for styling
   const getExtraCharClassName = (i, idx, extra) => {
     if (
       currWordIdx === i &&
@@ -431,6 +486,7 @@ const Input = ({
     return "char-error";
   };
 
+  // gets extra typed characters name for styling
   const getExtraCharsDisplay = (word, i) => {
     let input = wordsHistory[i];
     if (!input) {
@@ -452,6 +508,7 @@ const Input = ({
     }
   };
 
+  // checks if the previous word written by the user was correct or not
   const checkPrev = () => {
     const currWord = words[currWordIdx];
     const currInputWord = currInput.trim();
@@ -479,6 +536,7 @@ const Input = ({
     }
   };
 
+  // gets word class used for styling
   const getWordClass = (wordIdx) => {
     if (incorrect.has(wordIdx)) {
       if (currWordIdx === wordIdx) {
@@ -493,6 +551,7 @@ const Input = ({
     }
   };
 
+  // gets character class, used for styling
   const getCharClass = (wordIdx, charIdx, char, word) => {
     const keyString = wordIdx + "." + charIdx;
     if (
@@ -545,6 +604,8 @@ const Input = ({
     }
   };
 
+  // gets game mode class used for styling
+
   const getModeClass = (addon) => {
     if (addon) {
       return "active-button";
@@ -552,6 +613,7 @@ const Input = ({
     return "inactive-button";
   };
 
+  // gets timer class, used for styling
   const getTimerClass = (buttonTimerlimit) => {
     if (limitStart === buttonTimerlimit) {
       return "active-button";
@@ -559,6 +621,7 @@ const Input = ({
     return "inactive-button";
   };
 
+  // gets sound button class, used for styling
   const getSoundClass = (mode) => {
     if (mode) {
       return "sound-button";
@@ -566,6 +629,7 @@ const Input = ({
     return "sound-button-deactive";
   };
 
+  // copies result link to clipboard whenever share button is clicked
   const handleShare = () => {
     if (window.localStorage.getItem("vt_login") !== "true"){
       toast.error("You must login to share your result");

@@ -4,23 +4,33 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Header from "./Header";
 
+
+// Leaderboard is the global leaderboard that shows data from the database
 function Leaderboard(){
+    // set current timeLimit and wordLimit to 15 initially
     const [timeLimit, setTimeLimit] = useState("15");
     const [wordLimit, setWordLimit] = useState("15");
+
+    // leaderboard data of timed and words mode
     const [timeData, setTimeData] = useState([]);
     const [wordData, setWordData] = useState([]);
 
+    // whenever a different time limit is clicked, toggle the active class
     const handleTimeClick = (e) => {
         document.getElementsByClassName("time-active")[0].classList.remove("time-active");
         e.target.classList.toggle("time-active")
         setTimeLimit(e.target.innerText)
     }
+
+    // whenever a different word limit is clicked, toggle the active class
+
     const handleWordClick = (e) => {
         document.getElementsByClassName("word-active-lb")[0].classList.remove("word-active-lb");
         e.target.classList.toggle("word-active-lb")
         setWordLimit(e.target.innerText)
     }
 
+    // on time limit change, fetch the leaderboard data from api and set it
     useEffect(() => {
         fetch("http://127.0.0.1:5000/leaderboard", {
             method: "POST",
@@ -32,6 +42,7 @@ function Leaderboard(){
         .catch(e => toast.error(e.toString()))
     }, [timeLimit])
 
+    // on word limit change, fetch the leaderboard data from api and set it
     useEffect(() => {
         fetch("http://127.0.0.1:5000/leaderboard", {
             method: "POST",

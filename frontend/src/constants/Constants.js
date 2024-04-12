@@ -1,3 +1,5 @@
+// Constants used in the components
+
 const DEFAULT_WORDS_COUNT = 100;
 const DEFAULT_COUNT_DOWN = 60;
 const NUMBER = "Numbers";

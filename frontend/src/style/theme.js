@@ -1,3 +1,5 @@
+// Theme of the website
+
 const theme = {
   label: "Theme",
   background: "#121212",

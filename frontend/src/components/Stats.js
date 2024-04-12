@@ -3,6 +3,8 @@ import { Box } from "@mui/system";
 import { Tooltip } from "@mui/material";
 import { CHARS_TOOLTIP } from "../constants/Constants";
 
+
+// This shows the statistics of a test after its finished
 const Stats = ({
   status,
   wpm,

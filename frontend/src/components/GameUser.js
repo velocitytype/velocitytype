@@ -1,5 +1,6 @@
 import React from "react";
 
+//GameUser is the user data shown while the game has not started
 function User({username, status, host}){
     return (
         <div className="game-user">

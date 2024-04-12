@@ -5,14 +5,20 @@ import {useNavigate} from "react-router-dom"
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// This component handles user registration and login
 function Registration(){
+    // navigate to redirect to another path
     const navigate = useNavigate();
+
+    // if user is already log in, then redirect to /profile
     useEffect(() => {
         const vt_login = window.localStorage.getItem("vt_login")
         if (vt_login === "true"){
             navigate("/profile");
         }
     }, [])
+
+    // handle's register, sends data to the server and receives response
     const handleRegister = (e) => {
         e.preventDefault()
         const username = e.target[0].value
@@ -32,6 +38,7 @@ function Registration(){
         }).then(res => res.json())
         .then(r => {
             if (r.message === "User registered successfully"){
+                // if user is successfully registered, set login to true
                 window.localStorage.setItem("vt_login", "true")
                 toast.success("Registration successful")
                 navigate("/profile")
@@ -44,6 +51,7 @@ function Registration(){
         })
     }
 
+    // handles login, sends data to the server and receives response
     const handleLogin = (e) => {
         e.preventDefault();
         const username = e.target[0].value;
@@ -57,6 +65,7 @@ function Registration(){
         }).then(res => res.json())
         .then(r => {
             if (r.message === "User logged in successfully"){
+                // if user is successfully registered, set login to true
                 window.localStorage.setItem("vt_login", "true")
                 toast.success("Login successful");
                 navigate("/profile")

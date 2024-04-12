@@ -2,6 +2,8 @@ import React from "react";
 import { Box } from "@mui/system";
 import { Tooltip } from "@mui/material";
 
+
+// This shows the results of a shared result
 const ResultStats = ({
   status,
   wpm,

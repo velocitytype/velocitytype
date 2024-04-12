@@ -1,3 +1,5 @@
+// Import all components and their styling
+
 import React, { useRef } from "react";
 import { ThemeProvider } from "styled-components";
 import Input from "./components/Input";
@@ -8,6 +10,7 @@ import './style/register.css';
 import './style/leaderboard.css';
 import './style/profile.css';
 import './style/sharedresult.css';
+import './style/notfound.css';
 import theme from './style/theme';
 import {
   BrowserRouter as Router,
@@ -20,7 +23,9 @@ import UserProfile from "./components/UserProfile";
 import Multiplayer from "./components/Multiplayer";
 import { SocketProvider } from "./components/SocketContext";
 import SharedResult from "./components/SharedResult";
+import NotFound from "./components/NotFound";
 
+// Home is the homepage that contains the wpm test
 function Home(){
   const textInputRef = useRef(null);
   const focusTextInput = () => {
@@ -41,6 +46,7 @@ function Home(){
   )
 }
 
+// Registration Page
 function RegisterPage(){
   return (
     <ThemeProvider theme={theme}>
@@ -53,6 +59,7 @@ function RegisterPage(){
   )
 }
 
+// Leaderboard Page
 function LeaderboardPage(){
  return (
     <ThemeProvider theme={theme}>
@@ -65,6 +72,7 @@ function LeaderboardPage(){
   )
 }
 
+// Profile page of a user
 function UserProfilePage(){
   return (
     <ThemeProvider theme={theme}>
@@ -77,6 +85,7 @@ function UserProfilePage(){
   )
 }
 
+// Multiplayer/Game mode page
 function MultiplayerPage(){
   const textInputRef = useRef(null);
   const focusTextInput = () => {
@@ -99,6 +108,7 @@ function MultiplayerPage(){
   )
 }
 
+// Shared Result Page
 function SharedResultPage(){
   return (
     <ThemeProvider theme={theme}>
@@ -111,8 +121,22 @@ function SharedResultPage(){
   )
 }
 
+// 404 not found page
+function NotFoundPage(){
+  return (
+    <ThemeProvider theme={theme}>
+      <>
+        <div className="not-found-canvas">
+          <NotFound />
+        </div>
+      </>
+    </ThemeProvider>
+  )
+}
+
 function App() {
   return (
+    // Set up routing
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -122,6 +146,7 @@ function App() {
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/game" element={<MultiplayerPage />} />
         <Route path="/results/:id" element={<SharedResultPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>
   );

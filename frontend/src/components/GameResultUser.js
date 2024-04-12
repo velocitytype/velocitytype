@@ -1,6 +1,8 @@
 import React from "react";
 import { FaCrown } from "react-icons/fa";
 
+// GameResultUser is the component for showing user data on a game's leaderboard
+
 function GameResultUser({username, wpm, accuracy, rank}){
     return (
         <div className="game-result-user">

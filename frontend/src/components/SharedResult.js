@@ -7,15 +7,21 @@ import { useParams } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+// This shows results of a user via given id
 function SharedResult(){
+    // get id from parameters of the url
     const { id } = useParams();
+    // set up data
     const [username, setUsername] = useState("")
     const [mode, setMode] = useState("")
     const [limit, setLimit] = useState("")
     const [wpm, setWpm] = useState("")
     const [accuracy, setAccuracy] = useState("")
     const [time, setTime] = useState("")
+    // set up ready to know if the result is loaded or not
     const [ready, setReady] = useState(false)
+
+    // on load, fetch the result of the given id from the server
     useEffect(() => {
         fetch(`http://127.0.0.1:5000/result?id=${id}`)
         .then(res => res.json())

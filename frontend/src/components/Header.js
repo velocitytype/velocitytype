@@ -6,6 +6,8 @@ import { MdLeaderboard } from "react-icons/md";
 import { IoGameController } from "react-icons/io5";
 import '../style/header.css';
 
+// Header shows the logo and icons related to the site
+
 const Header = () => {
   const navigate = useNavigate();
   return (

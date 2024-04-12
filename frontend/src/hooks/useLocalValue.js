@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 
+// this hook gives the value of a key from local storage, if it exists else returns default value
 const useLocalValue = (defaultVal, key) => {
   const [localValue, setLocalValue] = useState(() => {
     const value = window.localStorage.getItem(key);

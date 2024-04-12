@@ -3,6 +3,8 @@ import { Box } from "@mui/system";
 import { Tooltip } from "@mui/material";
 import { CHARS_TOOLTIP } from "../constants/Constants";
 
+// GameStats shows statistics of games when a user finishes the test
+
 const GameStats = ({
   status,
   wpm,

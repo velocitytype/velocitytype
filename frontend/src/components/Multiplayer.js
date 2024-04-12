@@ -6,23 +6,38 @@ import '../style/multiplayer.css';
 import GameInput from "./GameInput";
 import { SocketContext } from "./SocketContext";
 import User from "./GameUser";
-import {useNavigate} from "react-router-dom";
+
+// This is the interface for game/multiplayer mode
 
 function Multiplayer({textInputRef, handleInputFocus}){
+    // socket object to communicate to the server and emit events
     const socket = useContext(SocketContext)
+    // current roomId input's reference
     const roomIdRef = useRef(null)
+    // current username input's reference
     const usernameRef = useRef(null)
+    // the user has joined a room or not
     const [roomJoined, setRoomJoined] = useState(false)
+    // set the users in the connected room
     const [users, setUsers] = useState([])
+    // states if the user is ready or not
     const [isReady, setIsReady] = useState(false)
+    // username of the current user
     const [username, setUsername] = useState("")
+    // is the user the host of the room?
     const [roomHost, setRoomHost] = useState(false)
+    // current room id
     const [roomId, setRoomId] = useState(null)
+    // words that will be used in the test, same for all clients
     const [words, setWords] = useState([])
+    // current game mode (words/time)
     const [mode, setMode] = useState("words")
+    // current game limit (15/30/60/90)
     const [limit, setLimit] = useState(15)
+    // has the game started?
     const [gameStarted, setGameStarted] = useState(false)
-    const navigate = useNavigate()
+
+    // joins the room with given room id and username
     const handleJoin = () => {
         const roomId = roomIdRef.current.value;
         const username = usernameRef.current.value;
@@ -35,61 +50,76 @@ function Multiplayer({textInputRef, handleInputFocus}){
         setRoomJoined(true)
     }
 
+    // whenever someone joins the room, update the users, mode and limit
     socket.on("room-joined", (data) => {
         setUsers(data.users)
         setMode(data.mode)
         setLimit(data.limit)
     })
 
+    // if the user is the host, set room host to true, to toggle config
     socket.on("room-host", (data) => {
         setIsReady(true)
         setRoomHost(true)
     })
 
+    // whenever a user is ready, update users data
     socket.on("user-ready", (data) => {
         setUsers(data.users)
     })
 
+    // emits ready event so all clients know this user is ready
     const handleReady = () => {
         socket.emit("ready", {"roomId": roomId, "username": username})
     }
 
+    // emits game-start that starts the game
     const startGame = () => {
         socket.emit("game-start", {"roomId": roomId, "mode": mode, "limit": limit})
     }
+    
+    // if all users are not ready, game can not be started
     socket.on("user-not-ready", (data) => {
         toast.error(data.message)
     })
 
+    // on game started, set the words received from the server
     socket.on("game-started", (data) => {
         setWords(data.words)
         setGameStarted(true)
     })
 
+    // whenever someone left room, update users
+
     socket.on("room-left", (data) => {
         setUsers(data.users)
     })
+
+    // end the room/ game
     const endGame = () => {
         socket.emit("end-room", {"roomId": roomId})
     }
 
+    // emits leave-room telling the user wants to leave
     const handleLeave = () => {
         socket.emit("leave-room", {"roomId": roomId, "username": username})
         toast.warning("Room ended")
         socket.close()
         window.location.reload()
     }
+    // on room end, close connection
     socket.on("room-ended", () => {
-        console.log("HERE")
         socket.close()
         window.location.reload()
     })
 
+    // on game config changed, set the new config
     socket.on("game-config-changed", (data) => {
         setMode(data.mode)
         setLimit(data.limit)
     })
 
+    // whenever mode, limit changes emit change-game-config telling the server to change the config
     useEffect(() => {
         socket.emit("change-game-config", {"roomId": roomId, "mode": mode, "limit": limit})
     }, [mode, limit])
