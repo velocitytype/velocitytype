@@ -116,6 +116,13 @@ body {
     justify-content: space-between;
 }
 
+.username-logout {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
 .username-logout button {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
@@ -165,4 +172,23 @@ body {
     align-items: center;
     margin-top: 4rem;
     font-size: 1.5rem;
+}
+
+#disable-2fa {
+    border: none;
+    outline: none;
+    background: var(--primary);
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    cursor: pointer;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+#disable-2fa:hover {
+    background: #9640ff;
+    transition: 250ms ease-in-out;
 }

@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 function Registration(){
     // navigate to redirect to another path
     const navigate = useNavigate();
-
+    const [twoFa, setTwoFa] = useState(false)
     // if user is already log in, then redirect to /profile
     useEffect(() => {
         const vt_login = window.localStorage.getItem("vt_login")
@@ -57,6 +57,27 @@ function Registration(){
         const username = e.target[0].value;
         const password = e.target[1].value;
         const payload = {name: username, password: password}
+        if (twoFa){
+            const otp = e.target[2].value;
+            fetch("http://127.0.0.1:5000/verify-two-factor", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({"name": username, "otp": otp})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message === "User logged in successfully"){
+                    // if user is successfully registered, set login to true
+                    window.localStorage.setItem("vt_login", "true")
+                    toast.success("Login successful");
+                    navigate("/profile")
+                } else {
+                    toast.error(data.message)
+                }
+            })
+            .catch(e => toast.error(e.toString()))
+            return;
+        }
         fetch("http://127.0.0.1:5000/login", {
             credentials: "include",
             method: "POST",
@@ -64,6 +85,11 @@ function Registration(){
             body: JSON.stringify(payload)
         }).then(res => res.json())
         .then(r => {
+            if (r["message"] === "2FA is enabled"){
+                setTwoFa(true)
+                toast.success("Enter 2FA OTP to proceed")
+                return;
+            }
             if (r.message === "User logged in successfully"){
                 // if user is successfully registered, set login to true
                 window.localStorage.setItem("vt_login", "true")
@@ -99,6 +125,7 @@ function Registration(){
                         <section>
                             <input type="text" placeholder="Username" />
                             <input type="password" placeholder="Password" />
+                            {twoFa ? <input type="number" placeholder="2FA OTP" /> : ""}
                         </section>
                         <button type="submit">Login</button>
                     </form>

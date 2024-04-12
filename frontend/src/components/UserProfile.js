@@ -5,6 +5,7 @@ import '../style/profile.css';
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Dialog, DialogTitle } from "@mui/material";
 
 // This is the profile page of a user
 function UserProfile(){
@@ -58,6 +59,59 @@ function UserProfile(){
         window.localStorage.setItem("vt_login", "false")
         navigate("/")
     }
+
+    const [qr, setQr] = useState(null)
+    const [dialog, setDialog] = useState(false)
+    const [enabled, setEnabled] = useState(false)
+
+    const handleKeyDown = (e) => {
+        if (e.keyCode === 27) {
+            setDialog(false)
+        }
+    }
+    useEffect(() => {
+        if (dialog === true){
+            fetch("http://127.0.0.1:5000/profile", {
+                credentials: "include",
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({"2fa": "enable"})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message === "2FA already enabled"){
+                    setEnabled(true)
+                    return;
+                }
+                setQr("data:image/png;base64," + data.qr_code_url.slice(2, data.qr_code_url.length - 1))
+            })
+            .catch(e => toast.error(e.toString()))
+        }
+    }, [dialog])
+
+    function handle2FA(){
+        setDialog(true)
+    }
+    function disable2FA(){
+        fetch("http://127.0.0.1:5000/profile", {
+                credentials: "include",
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({"2fa": "disable"})
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message === "2FA disabled successfully"){
+                    toast(data.message)
+                    setEnabled(false)
+                    setDialog(false)
+                    return;
+                }
+            })
+            .catch(e => toast.error(e.toString()))
+
+        
+    }
     return (
         <>
             <Header />
@@ -69,6 +123,7 @@ function UserProfile(){
                     </div>
                     <div className="username-logout">
                         <button onClick={handleLogout}>Logout</button>
+                        <button onClick={handle2FA}>2FA Settings</button>
                     </div>
                 </div>
                 <div className="separator"></div>
@@ -109,7 +164,22 @@ function UserProfile(){
                     </div>
                 </div>
             </div> : <div id="profile-loader">Loading Profile...</div>}
+            <Dialog
+                PaperProps={{
+                style: {
+                    backgroundColor: "transparent",
+                    boxShadow: "none",
+                },
+                }}
+                open={dialog}
+                onKeyDown={handleKeyDown}
+            >
+                <DialogTitle>
+                    {enabled ? <button id="disable-2fa" onClick={disable2FA}>Disable 2FA</button> : <img height={400} width={400} src={qr} />}
+                </DialogTitle>
+            </Dialog>
             <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop={true} closeOnClick rtl={false} pauseOnHover theme="dark"/>
+            
         </>
     )
 }
