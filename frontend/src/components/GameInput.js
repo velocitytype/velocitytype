@@ -1,3 +1,5 @@
+// Imports
+
 import React, { useEffect, useState, useMemo, useContext } from "react";
 import useSound from "use-sound";
 import '../style/input.css';
@@ -18,6 +20,7 @@ import tap from "../sounds/tap.wav";
 import Keyboard from "./Keyboard";
 import { FaRegKeyboard } from "react-icons/fa";
 import { SocketContext } from "./SocketContext";
+import { IoMdShare } from "react-icons/io";
 import GameResultUser from "./GameResultUser";
 
 const GameInput = ({
@@ -29,7 +32,10 @@ const GameInput = ({
   username,
   mode
 }) => {
+  // play will used to play key tap sounds
   const [play] = useSound(tap);
+
+  // useMemo to create an array with 0's same as words' array length
   const wordRefs = useMemo(
     () =>
       Array(words.length)
@@ -38,32 +44,59 @@ const GameInput = ({
     [words]
   );
 
+  // limit is the number of words/seconds
   const [limit, setLimit] = useState(limitStart);
+  // intervalId to observe and stop wpm calculation after limit ends (for timed mode)
   const [intervalId, setIntervalId] = useState(null);
+  // status is the current game status, waiting, started or finished
   const [status, setStatus] = useState("waiting");
+  // currInput is the current input (word) entered by the user
   const [currInput, setCurrInput] = useState("");
+  // currWordIdx is the index of the currently active word (the one which user is typing)
   const [currWordIdx, setCurrWordIdx] = useState(0);
+  // currCharIdx is the index of the currenly active char (the one which user will type)
   const [currCharIdx, setCurrCharIdx] = useState(-1);
+  // the previously input word by user is stored
   const [prevInp, setPrevInp] = useState("");
+  // correct is the set containing words which the user correctly typed
   const [correct, setCorrect] = useState(new Set());
+  // incorrect is the set containing words which the user incorrectly typed
   const [incorrect, setIncorrect] = useState(new Set());
+  // wordsHistory keeps the history of words
   const [wordsHistory, setWordsHistory] = useState({});
+  // raw is the raw wpm of the user
   const [raw, setRaw] = useState(0);
+  // wpmStrokes is the number of correct strokes of a user
   const [wpmStrokes, setWpmStrokes] = useState(0);
+  // wpm is the words per minute speed of a user
   const [wpm, setWpm] = useState(0);
+  // charStats contains how many characters are typed correctly, incorrectly, missing, extra
   const [charStats, setCharStats] = useState([]);
+  // charData contains data regarding characters
   const [charData, setCharData] = useState({});
   const keyString = currWordIdx + "." + currCharIdx;
+  // currChar is the current character typed by the user
   const [currChar, setCurrChar] = useState("");
+  // currMode is the currently selected mode (words / time)
   const currMode = mode;
+  // wordsStart is the starting time of test when mode is words
   const [wordsStart, setWordsStart] = useState(0)
+  // soundMode is to determine if the user has sound active or not
   const [soundMode, setSoundMode] = useLocalValue(false, "sound");
+  // it keeps track of whether the on-screen keyboard is active or not
   const [keyboardActive, setKeyboardActive] = useState(false)
+  // currKey is the current key pressed by the user (any key on the keyboard)
   const [currKey, setCurrKey] = useState("")
+  // this toggles stats when a user starts typing
   const [remStatsClass, setRemStatsClass] = useState("rem-stats-wrapper")
+  // leaderboardData contains the results of the game
   const [leaderboardData, setLeaderboardData] = useState([])
+  // socket object to communicate to server
   const socket = useContext(SocketContext)
+  // resultId to fetch result later
+  const [resultId, setResultId] = useState(null)
 
+  // start function starts the test
   const start = () => {
     if (status === "finished") {
       setCurrInput("");
@@ -87,18 +120,19 @@ const GameInput = ({
           setLimit((prevlimit) => {
             if (prevlimit === 0) {
               clearInterval(intervalId);
+              // get correctly written chars
               const correctChars = Object.values(charData).filter(
                 (e) => e === true
               ).length;
-
+              // get incorrectly written chars
               const incorrectChars = Object.values(charData).filter(
                 (e) => e === false
               ).length;
-
+              // get missing chars
               const missingChars = Object.values(charData).filter(
                 (e) => e === undefined
               ).length;
-
+              // total chars for calculation
               const totalChars =
                 correctChars +
                 missingChars +
@@ -144,6 +178,7 @@ const GameInput = ({
 
   useEffect(() => {
     if (limitStart == limit) return
+    // set wpm when limit changes
     if (wpmStrokes !== 0) {
       const currWpm =
         (wpmStrokes / 5 / (limitStart - limit)) * 60.0;
@@ -152,11 +187,12 @@ const GameInput = ({
   }, [limit])
 
   socket.on("leaderboard", data => {
-    console.log(data)
+    // as soon as we get results, update it
     setLeaderboardData(data.data)
   })
   useEffect(() => {
     if (status === "finished"){
+      // if test ended, do the wpm, accuracy calculations
       setRemStatsClass("rem-stats-wrapper")
       const testTime = parseInt(new Date().getTime() / 1000)
       const text = testTime.toString() + " " + currMode + " " + limitStart.toString()
@@ -172,11 +208,17 @@ const GameInput = ({
       ).length;
       const totalChars = correctChars + missingChars + incorrectChars;
       const accuracy = correctChars === 0 ? 0 : (correctChars / totalChars) * 100;
+      // payload to send to API to save results
       const payload = {"test_mode": currMode, "test_limit": limitStart, "wpm": Math.round(wpm * 100) / 100, "accuracy": Math.round(accuracy * 100) / 100, "test_time": testTime, "md5_hash": md5Hash}
+      // emits game-end event so the server knows the user has completed the test
       socket.emit("game-end", {"roomId": roomId, "username": username, "wpm": Math.round(wpm * 100) / 100, "accuracy": Math.round(accuracy * 100) / 100})
+
+      // if user is not logged in, no need to save data
       if (window.localStorage.getItem("vt_login") !== "true"){
         return;
       }
+
+      // saves data to the server
       fetch("http://127.0.0.1:5000/stats", {
         method: "POST",
         credentials: "include",
@@ -190,6 +232,7 @@ const GameInput = ({
           toast.warning("Login again to save your results")
           return
         }
+        setResultId(data.UID)
         toast.success("Result saved successfully")
       })
       .catch(e => toast.error(e.toString()))
@@ -197,6 +240,7 @@ const GameInput = ({
   }, [status])
 
   const handleKeyDown = (e) => {
+    // if soundMode is true then play key tap sound on each key tap
     if (status !== "finished" && soundMode) {
       play();
     }
@@ -209,6 +253,7 @@ const GameInput = ({
         setWpmStrokes(wpmStrokes + 1);
       }
     }
+    // if status is started and currMode is words, check if the game is ended and toggle stats
     if (status === "started" && currMode === "words"){
       if ((currWordIdx === words.length - 1 && currCharIdx + 2 === words[currWordIdx].length) || (currWordIdx === words.length)){
         const extraChars = Object.values(charData)
@@ -261,10 +306,13 @@ const GameInput = ({
       setPrevInp("");
       return;
     }
+
+    // if game is not started, start the game
     if (status !== "started" && status !== "finished") {
       start();
     }
 
+    // handle space key tap
     if (keyCode === 32) {
       const prev = checkPrev();
       if (prev === true || prev === false) {
@@ -275,7 +323,7 @@ const GameInput = ({
       } else {
         return;
       }
-
+      // handle backspace key tap
     } else if (keyCode === 8) {
       delete charData[keyString];
       setRaw(raw - 1)
@@ -300,6 +348,7 @@ const GameInput = ({
     }
   };
 
+  // function to get extra characters class name for styling
   const getExtraCharClassName = (i, idx, extra) => {
     if (
       currWordIdx === i &&
@@ -310,6 +359,7 @@ const GameInput = ({
     return "char-error";
   };
 
+  // function to get extra characters for styling
   const getExtraCharsDisplay = (word, i) => {
     let input = wordsHistory[i];
     if (!input) {
@@ -331,6 +381,7 @@ const GameInput = ({
     }
   };
 
+  // checks when space is pressed, if the previously entered word is correct or not
   const checkPrev = () => {
     const currWord = words[currWordIdx];
     const currInputWord = currInput.trim();
@@ -358,6 +409,7 @@ const GameInput = ({
     }
   };
 
+  // function to get words class name for styling
   const getWordClass = (wordIdx) => {
     if (incorrect.has(wordIdx)) {
       if (currWordIdx === wordIdx) {
@@ -372,6 +424,7 @@ const GameInput = ({
     }
   };
 
+  // function to get characters class name for styling
   const getCharClass = (wordIdx, charIdx, char, word) => {
     const keyString = wordIdx + "." + charIdx;
     if (
@@ -423,6 +476,19 @@ const GameInput = ({
       return "char";
     }
   };
+
+  const handleShare = () => {
+    if (window.localStorage.getItem("vt_login") !== "true"){
+      toast.error("You must login to share your result");
+      return;
+    }
+    if (!resultId){
+      toast.error("Please try again later");
+      return;
+    }
+    navigator.clipboard.writeText(`http://localhost:3000/results/${resultId}`)
+    toast.success("Link copied successfully")
+  }
 
   return (
     <>
@@ -524,6 +590,18 @@ const GameInput = ({
                   </IconButton>
               </Tooltip>
                 }
+                {status === "finished" ? <Tooltip title="Share your result">
+                <IconButton
+                  id="share-result-button"
+                  style={{fontSize: "16px"}}
+                  aria-label="share"
+                  color="primary"
+                  size="medium"
+                  onClick={handleShare}
+                >
+                  <IoMdShare />
+                </IconButton>
+              </Tooltip> : ""}
             </Box>
           </Grid>
           <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop={true} closeOnClick rtl={false} pauseOnHover theme="dark"/>

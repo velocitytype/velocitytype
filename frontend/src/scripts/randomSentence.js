@@ -1969,7 +1969,7 @@ const generateSentence = (addNum, addPunctuation, length) => {
     if (addNum){
         const n = generateNum(5, 10)
         for(let i=0;i<n;i++){
-            sentenceArr.push(generateNumChars(1, 2))
+            sentenceArr[parseInt(Math.random() * sentenceArr.length)] = generateNumChars(1, 2)
         }
         sentenceArr = sentenceArr
                         .map(value => ({ value, sort: Math.random() }))

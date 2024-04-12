@@ -36,6 +36,12 @@ function UserProfile(){
                     setWpmData(tempWpmData)
                 }
             })
+            if (data["recent_tests"].length !== 4){
+                let rem = 4 - data["recent_tests"].length;
+                for(let i=0;i<rem;i++){
+                    data["recent_tests"].push(["-", "-", "-", "-"])
+                }
+            }
             setUserData(data)
         })
         .catch(e => toast.error(e.toString()))

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaUser } from "react-icons/fa";
 import { AiFillHome } from "react-icons/ai";
 import { MdLeaderboard } from "react-icons/md";
+import { IoGameController } from "react-icons/io5";
 import '../style/header.css';
 
 const Header = () => {
@@ -16,6 +17,7 @@ const Header = () => {
       </section>
       <section>
         <AiFillHome onClick={() => navigate("/")} style={{fontSize: "24px"}}/>
+        <IoGameController onClick={() => navigate("/game")} style={{fontSize: "24px"}}/>
         <MdLeaderboard onClick={() => navigate("/leaderboard")} style={{fontSize: "24px"}}/>
         <FaUser onClick={() => navigate("/register")} style={{fontSize: "24px"}}/>
       </section>

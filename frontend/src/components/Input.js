@@ -33,6 +33,7 @@ import tap from "../sounds/tap.wav";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import Keyboard from "./Keyboard";
 import { FaRegKeyboard } from "react-icons/fa";
+import { IoMdShare } from "react-icons/io";
 
 const Input = ({
   textInputRef,
@@ -115,6 +116,7 @@ const Input = ({
   const [keyboardActive, setKeyboardActive] = useState(false)
   const [currKey, setCurrKey] = useState("")
   const [remStatsClass, setRemStatsClass] = useState("rem-stats-wrapper")
+  const [resultId, setResultId] = useState(null)
 
   const toggleSoundMode = () => {
     setSoundMode(!soundMode);
@@ -274,6 +276,7 @@ const Input = ({
 
   useEffect(() => {
     if (status === "finished"){
+      setKeyboardActive(false)
       setRemStatsClass("rem-stats-wrapper")
       if (window.localStorage.getItem("vt_login") !== "true"){
         return;
@@ -306,6 +309,7 @@ const Input = ({
           toast.warning("Login again to save your results")
           return
         }
+        setResultId(data.UID)
         toast.success("Result saved successfully")
       })
       .catch(e => toast.error(e.toString()))
@@ -561,6 +565,19 @@ const Input = ({
     }
     return "sound-button-deactive";
   };
+
+  const handleShare = () => {
+    if (window.localStorage.getItem("vt_login") !== "true"){
+      toast.error("You must login to share your result");
+      return;
+    }
+    if (!resultId){
+      toast.error("Please try again later");
+      return;
+    }
+    navigator.clipboard.writeText(`http://localhost:3000/results/${resultId}`)
+    toast.success("Link copied successfully")
+  }
 
   return (
     <>
@@ -829,6 +846,18 @@ const Input = ({
                   <FaRegKeyboard />
                 </IconButton>
               </Tooltip>
+              {status === "finished" ? <Tooltip title="Share your result">
+                <IconButton
+                  id="share-result-button"
+                  style={{fontSize: "16px"}}
+                  aria-label="share"
+                  color="primary"
+                  size="medium"
+                  onClick={handleShare}
+                >
+                  <IoMdShare />
+                </IconButton>
+              </Tooltip> : ""}
             </Box>
           </Grid>
           <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop={true} closeOnClick rtl={false} pauseOnHover theme="dark"/>

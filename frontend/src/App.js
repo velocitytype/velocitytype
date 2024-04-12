@@ -7,6 +7,7 @@ import './style/header.css';
 import './style/register.css';
 import './style/leaderboard.css';
 import './style/profile.css';
+import './style/sharedresult.css';
 import theme from './style/theme';
 import {
   BrowserRouter as Router,
@@ -18,6 +19,7 @@ import Leaderboard from "./components/Leaderboard";
 import UserProfile from "./components/UserProfile";
 import Multiplayer from "./components/Multiplayer";
 import { SocketProvider } from "./components/SocketContext";
+import SharedResult from "./components/SharedResult";
 
 function Home(){
   const textInputRef = useRef(null);
@@ -97,6 +99,18 @@ function MultiplayerPage(){
   )
 }
 
+function SharedResultPage(){
+  return (
+    <ThemeProvider theme={theme}>
+      <>
+        <div className="shared-result-canvas">
+          <SharedResult />
+        </div>
+      </>
+    </ThemeProvider>
+  )
+}
+
 function App() {
   return (
     <Router>
@@ -107,6 +121,7 @@ function App() {
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/game" element={<MultiplayerPage />} />
+        <Route path="/results/:id" element={<SharedResultPage />} />
       </Routes>
     </Router>
   );
