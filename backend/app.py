@@ -44,7 +44,7 @@ class RegisterResource(Resource):
         cursor.execute("SELECT * FROM users WHERE name = %s", (name,))
         user = cursor.fetchone()
         if user is not None:
-            return {"message": "User already exists"}, 400
+            return {"message": "Username is already taken"}, 400
 
         # Hash password
         password = hashlib.sha256(password.encode()).hexdigest()
