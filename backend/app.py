@@ -392,4 +392,8 @@ api.add_resource(LeaderboardResource, '/leaderboard')
 api.add_resource(ResultResource, "/result")
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     sio.run(app, allow_unsafe_werkzeug=True, debug=True)
+=======
+    app.run()
+>>>>>>> 944b2322fe1023a964a2d613bf4be83e41ce2064

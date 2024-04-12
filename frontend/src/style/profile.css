@@ -1,0 +1,168 @@
+:root{
+    --background: #121212;
+    --text: #FAFAFA;
+    --title: #ffc107;
+    --gray: #706d6d;
+    --primary: #BB86FC;
+    --fontFamily: sans-serif;
+}
+
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  background: var(--background);
+  color: var(--text);
+  padding: 0;
+  margin: 0;
+  font-family: sans-serif;
+  transition: all 0.25s linear;
+  overflow-x: hidden;
+}
+
+.profile-canvas {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    transition: padding-top .125s;
+    overflow: auto;
+    min-height: 100vh;
+    width: 100vw;
+    gap: 1rem;
+}
+.profile-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #262626;
+    border-radius: 10px;
+    padding: 2rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    margin-right: 15rem;
+    margin-left: 15rem;
+    overflow: auto;
+    height: 100vh;
+}
+
+.username-header{
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.username-header h1{
+    color: var(--primary);
+    padding: 0;
+    margin: 0;
+}
+
+.username-header p{
+    color: var(--gray);
+    padding: 0;
+    margin: 0;
+}
+
+.separator{
+    height: 1px;
+    width: 100%;
+    background: white;
+}
+
+.profile-result{
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-result section h2{
+    color: var(--primary);
+}
+.results{
+    display: flex;
+    justify-content: space-evenly;
+}
+.result{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+.result .test-mode{
+    color: gray;
+    font-size: 14px;
+}
+
+.result .test-wpm{
+    color: white;
+    font-size: 30px;
+}
+
+.result .test-accuracy{
+    color: gray;
+    font-size: 20px;
+}
+
+.username-header-wrapper{
+    display: flex;
+    justify-content: space-between;
+}
+
+.username-logout button {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border: none;
+    outline: none;
+    background: var(--primary);
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    color: white;
+}
+
+.username-logout button:hover{
+    background: #9640ff;
+    transition: 250ms ease-in-out;
+}
+
+@media (max-width: 1000px){
+    .profile-wrapper {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+}
+
+@media (max-width: 500px){
+    .result .test-wpm {
+        font-size: 20px;
+    }
+    .result .test-accuracy {
+        font-size: 14px;
+    }
+    .result .test-mode {
+        font-size: 12px;
+    }
+    .username-logout button {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        font-size: 12px;
+    }
+}
+
+#profile-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 4rem;
+    font-size: 1.5rem;
+}

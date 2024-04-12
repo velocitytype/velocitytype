@@ -1,0 +1,132 @@
+:root{
+    --background: #121212;
+    --text: #FAFAFA;
+    --title: #ffc107;
+    --gray: #706d6d;
+    --primary: #BB86FC;
+    --fontFamily: "sans-serif";
+}
+
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  background: var(--background);
+  color: var(--text);
+  padding: 0;
+  margin: 0;
+  font-family: sans-serif;
+  transition: all 0.25s linear;
+  overflow-x: hidden;
+}
+
+.register-canvas {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    transition: padding-top .125s;
+    overflow: hidden;
+    min-height: 100vh;
+    width: 100vw;
+    gap: 1rem;
+}
+
+.register-body{
+    display: flex;
+    justify-content: space-evenly;
+    padding-left: 5rem;
+    padding-right: 5rem;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+.register-body h1{
+    color: var(--primary);
+}
+.register-form-wrapper,
+.login-form-wrapper{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #262626;
+    padding: 3rem;
+    border-radius: 5px;
+}
+#register-form, #login-form{
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+    justify-content: space-between;
+}
+#register-form section,
+#login-form section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+#register-form input,
+#login-form input{
+    border: none;
+    outline: none;
+    background: transparent;
+    color: white;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 5px;
+    border: 1px solid white;
+    width: 200px;
+}
+#register-form input:focus,
+#login-form input:focus{
+    border: 1px solid var(--primary);
+}
+
+#register-form button,
+#login-form button{
+    border: none;
+    outline: none;
+    background: var(--primary);
+    padding: 0.75rem;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+#register-form button:hover,
+#login-form button:hover{
+    background: #9b4aff;
+    transition: 150ms ease-in-out;
+}
+
+@media(max-width: 720px){
+    body{
+        overflow-y: auto !important;
+    }
+    .register-body{
+        flex-direction: column;
+        gap: 4rem;
+        padding: 1rem;
+    }
+    .register-form-wrapper {
+        align-items: center;
+        width: 100%;
+    }
+    #register-form,
+    #login-form {
+        width: 100%;
+    }
+    #register-form input,
+    #login-form input {
+        width: 100%;
+    }
+}
