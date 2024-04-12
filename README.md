@@ -36,12 +36,13 @@ VelocityType is a website which measures your typing speed in wpm (words per min
  - md5: To generate hash and verify it later
  
  # Images
-<img src='https://i.postimg.cc/BtkmzkwH/1.png' />
-<img src='https://i.postimg.cc/nMy127C1/2.png' />
-<img src='https://i.postimg.cc/WDN8rvhL/3.png' />
-<img src='https://i.postimg.cc/1n4KCrGv/4.png' />
-<img src='https://i.postimg.cc/JtDqjK4n/5.png' />
-<img src='https://i.postimg.cc/Hr43VxW9/6.png' />
-<img src='https://i.postimg.cc/GTyxr3SY/7.png' />
-<img src='https://i.postimg.cc/7GcnpJXw/8.png' />
-<img src='https://i.postimg.cc/Tyt9J4Dy/9.png' />
+![Image](https://gcdnb.pbrd.co/images/QLVUB3w0W9nB.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/KaPaHksuPU7E.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/Z0V7UAlkgVFR.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/6ISA0B5LGZDX.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/0vltqIObb1FY.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/N3uq4nbkYlo9.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/SphDL8RjzOdO.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/XlOhBZeJ9I5u.png?o=1)
+![Image](https://gcdnb.pbrd.co/images/jr07QG3Em4ZP.png?o=1)
+ 
