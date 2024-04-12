@@ -10,6 +10,10 @@ from dotenv import load_dotenv
 from flask_socketio import SocketIO, send, emit, join_room, leave_room, close_room
 from words import word_list
 import random
+import pyotp
+import qrcode
+from io import BytesIO
+import base64
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -21,6 +25,7 @@ secret_key = os.getenv('SECRET_KEY')
 database_url = os.getenv('DATABASE_URL')
 
 sio = SocketIO(app, cors_allowed_origins=["http://localhost:3000"])
+from io import BytesIO
 rooms = {}
 results = {}
 modes = {}
@@ -218,20 +223,40 @@ class LoginResource(Resource):
         if user is None:
             return {"message": "Invalid credentials"}, 401
 
-        # Generate JWT, payload should be name and email
-        jwt_payload = {
-            "name": name,
-            "email": user[2]  # assuming email is at index 2 in the user tuple
-        }
+        cursor.execute("SELECT hasTwoFactor FROM users WHERE name = %s", (name,))
+        hasTwoFactor = cursor.fetchone()
+        if not hasTwoFactor:
+            # Generate JWT, payload should be name and email
+            jwt_payload = {
+                "name": name,
+                "email": user[2]  # assuming email is at index 2 in the user tuple
+            }
 
-        token = jwt.encode(jwt_payload, secret_key, algorithm="HS256")
+            token = jwt.encode(jwt_payload, secret_key, algorithm="HS256")
 
-        # Set JWT as a cookie
-        response = make_response({"message": "User logged in successfully"})
-        response.status_code = 200
-        response.set_cookie('Authorization', token, httponly=True, secure=True, samesite='None', max_age=864000)
+            # Set JWT as a cookie
+            response = make_response({"message": "User logged in successfully", "2fa": False})
+            response.status_code = 200
+            response.set_cookie('Authorization', token, httponly=True, secure=True, samesite='None', max_age=864000)
 
-        return response
+            return response
+        if hasTwoFactor[0]:
+            return {"message": "2FA is enabled", "2fa": True}, 200
+        else:
+            jwt_payload = {
+                "name": name,
+                "email": user[2]  # assuming email is at index 2 in the user tuple
+            }
+
+            token = jwt.encode(jwt_payload, secret_key, algorithm="HS256")
+
+            # Set JWT as a cookie
+            response = make_response({"message": "User logged in successfully", "2fa": False})
+            response.status_code = 200
+            response.set_cookie('Authorization', token, httponly=True, secure=True, samesite='None', max_age=864000)
+
+            return response
+
 
 class StatsResource(Resource):
     def post(self):
@@ -340,6 +365,88 @@ class ProfileResource(Resource):
             "email": email
         }, 200
 
+    def post(self):
+        # verify jwt generate qr code and return it
+
+        jwt_token = request.cookies.get('Authorization')
+        if jwt_token is None:
+            return {"message": "Unauthorized"}, 401
+
+        try:
+            payload = jwt.decode(jwt_token, secret_key, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return {"message": "Token has expired"}, 401
+        except jwt.InvalidTokenError:
+            return {"message": "Invalid token"}, 401
+        
+        username = payload.get('name')
+        email = payload.get('email')
+
+        conn = connect_to_database()
+
+        if conn is None:
+            return {"message": "Error connecting to database"}, 500
+        
+        cursor = conn.cursor()
+
+        if request.json["2fa"] == "enable":
+            # check if user already has 2fa enabled
+            cursor.execute("SELECT hasTwoFactor FROM users WHERE name = %s", (username,))
+            hasTwoFactor = cursor.fetchone()
+            print(hasTwoFactor)
+            if not hasTwoFactor:
+                hasTwoFactor = False
+            else:
+                hasTwoFactor = hasTwoFactor[0]
+
+            if hasTwoFactor:
+                return {"message": "2FA already enabled"}, 400
+            
+            # generate secret key
+            _secret_key = pyotp.random_base32()
+
+            # check if it is unique
+            cursor.execute("SELECT * FROM users WHERE secret_key = %s", (_secret_key,))
+            while cursor.fetchone() is not None:
+                _secret_key = pyotp.random_base32()
+                cursor.execute("SELECT * FROM users WHERE secret_key = %s", (_secret_key,))
+            
+            # generate qr code
+
+            totp = pyotp.TOTP(_secret_key)
+            uri = totp.provisioning_uri(name=username, issuer_name="VelocityType")
+            img = qrcode.make(uri)
+            img_byte_array = BytesIO()
+            img.save(img_byte_array, format='PNG')
+            img_byte_array.seek(0)
+            img_str = str(base64.b64encode(img_byte_array.getvalue()))
+
+
+            # update user record with secret key
+
+            cursor.execute("UPDATE users SET hasTwoFactor = TRUE, secret_key = %s WHERE name = %s", (_secret_key, username))
+
+            conn.commit()
+            
+            return {"message": "2FA enabled successfully", "qr_code_url": img_str}, 200
+
+        elif request.json["2fa"] == "disable":
+            cursor.execute("SELECT hasTwoFactor FROM users WHERE name = %s", (username,))
+            hasTwoFactor = cursor.fetchone()
+
+            if not hasTwoFactor:
+                return {"message": "2FA not enabled"}, 400
+            hasTwoFactor = hasTwoFactor[0]
+            
+            # update user record with secret key
+
+            cursor.execute("UPDATE users SET hasTwoFactor = FALSE, secret_key = NULL WHERE name = %s", (username,))
+
+            conn.commit()
+            
+            return {"message": "2FA disabled successfully"}, 200
+
+
         
 
 class LeaderboardResource(Resource):
@@ -381,6 +488,47 @@ class ResultResource(Resource):
         result_data = [[_result_data[0], _result_data[1], _result_data[2], float(_result_data[3]), float(_result_data[4]), _result_data[5]]]
         return {"message": "Result fetched successfully", "result": result_data}, 200
 
+class VerifyTwoFactor(Resource):
+    def post(self):
+        # verify jwt and otp        
+        username = request.json.get('name')
+        if not username:
+            return {"message": "Username is missing"}, 400
+
+        conn = connect_to_database()
+
+        if conn is None:
+            return {"message": "Error connecting to database"}, 500
+        
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT secret_key FROM users WHERE name = %s", (username,))
+        _secret_key = cursor.fetchone()[0]
+
+        if _secret_key is None:
+            return {"message": "2FA not enabled"}, 400
+
+        totp = pyotp.TOTP(_secret_key)
+        otp = str(request.json.get('otp'))
+
+        if not totp.verify(otp):
+            return {"message": "Invalid OTP"}, 400
+
+        cursor.execute("SELECT email FROM users WHERE name = %s", (username, ))
+        email = cursor.fetchone()[0]
+        jwt_payload = {
+            "name": username,
+            "email": email  # assuming email is at index 2 in the user tuple
+        }
+
+        token = jwt.encode(jwt_payload, secret_key, algorithm="HS256")
+
+        # Set JWT as a cookie
+        response = make_response({"message": "User logged in successfully"})
+        response.status_code = 200
+        response.set_cookie('Authorization', token, httponly=True, secure=True, samesite='None', max_age=864000)
+
+        return response
 
 
 
@@ -389,7 +537,9 @@ api.add_resource(LoginResource, '/login')
 api.add_resource(StatsResource, '/stats')
 api.add_resource(ProfileResource, '/profile')
 api.add_resource(LeaderboardResource, '/leaderboard')
-api.add_resource(ResultResource, "/result")
+api.add_resource(VerifyTwoFactor, '/verify-two-factor')
+api.add_resource(ResultResource, '/result')
+
 
 if __name__ == '__main__':
     sio.run(app, allow_unsafe_werkzeug=True, debug=True)
