@@ -37,6 +37,8 @@ function Multiplayer({textInputRef, handleInputFocus}){
 
     socket.on("room-joined", (data) => {
         setUsers(data.users)
+        setMode(data.mode)
+        setLimit(data.limit)
     })
 
     socket.on("room-host", (data) => {
@@ -82,6 +84,15 @@ function Multiplayer({textInputRef, handleInputFocus}){
         socket.close()
         window.location.reload()
     })
+
+    socket.on("game-config-changed", (data) => {
+        setMode(data.mode)
+        setLimit(data.limit)
+    })
+
+    useEffect(() => {
+        socket.emit("change-game-config", {"roomId": roomId, "mode": mode, "limit": limit})
+    }, [mode, limit])
     return ( 
         <>
             {!roomJoined ?

@@ -1,39 +1,24 @@
 import React, { useEffect, useState, useMemo, useContext } from "react";
 import useSound from "use-sound";
 import '../style/input.css';
-import { generateSentence } from "../scripts/randomSentence";
 import IconButton from '@mui/material/IconButton';
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
 import useLocalValue from "../hooks/useLocalValue";
-import Stats from "./Stats";
-import { Dialog } from "@mui/material";
+import GameStats from "./GameStats";
 import md5 from "md5";
-import DialogTitle from "@mui/material/DialogTitle";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import UndoIcon from "@mui/icons-material/Undo";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {
-  DEFAULT_WORDS_COUNT,
-  DEFAULT_COUNT_DOWN,
-  NUMBER,
-  SYMBOL,
-  NUMBER_TOOLTIP,
-  SYMBOL_TOOLTIP,
-  RESTART_TOOLTIP,
-  REDO_TOOLTIP,
-  NUMBER_KEY,
-  SYMBOL_KEY,
-  SOUND_TOOLTIP,
   KEYBOARD_TOOLTIP
 } from "../constants/Constants";
 import tap from "../sounds/tap.wav";
-import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import Keyboard from "./Keyboard";
 import { FaRegKeyboard } from "react-icons/fa";
 import { SocketContext } from "./SocketContext";
+import GameResultUser from "./GameResultUser";
 
 const GameInput = ({
   textInputRef,
@@ -45,51 +30,6 @@ const GameInput = ({
   mode
 }) => {
   const [play] = useSound(tap);
-//   const [limitStart, setLimitStart] = useLocalValue(
-//     DEFAULT_COUNT_DOWN,
-//     "timer-constant"
-//   );
-//   const [numberMode, setNumberMode] = useLocalValue(
-//     false,
-//     NUMBER_KEY
-//   )
-//   const [symbolMode, setSymbolMode] = useLocalValue(
-//     false,
-//     SYMBOL_KEY
-//   )
-//   const [restartDialog, setRestartDialog] = useState(false);
-
-//   const tabEnterReset = (e) => {
-//     if (e.keyCode === 13 || e.keyCode === 9) {
-//       e.preventDefault();
-//       setRestartDialog(false);
-//       reset(limitStart, numberMode, symbolMode, false);
-//     }
-//     else if (e.keyCode === 32) {
-//       e.preventDefault();
-//       setRestartDialog(false);
-//       reset(limitStart, numberMode, symbolMode, true);
-//     } else if (e.keyCode === 75) {
-//       e.preventDefault();
-//       setRestartDialog(false)
-//       setKeyboardActive(!keyboardActive);
-//     } else {
-//       e.preventDefault();
-//       setRestartDialog(false);
-//     }
-//   };
-//   const handleTab = () => {
-//     setRestartDialog(true);
-//   };
-
-//   const [wordsList, setWordsList] = useState(() => {
-//       return generateSentence(numberMode, symbolMode, DEFAULT_WORDS_COUNT);
-//   });
-
-//   const words = useMemo(() => {
-//     return wordsList.map((e) => e);
-//   }, [wordsList]);
-
   const wordRefs = useMemo(
     () =>
       Array(words.length)
@@ -121,76 +61,8 @@ const GameInput = ({
   const [keyboardActive, setKeyboardActive] = useState(false)
   const [currKey, setCurrKey] = useState("")
   const [remStatsClass, setRemStatsClass] = useState("rem-stats-wrapper")
+  const [leaderboardData, setLeaderboardData] = useState([])
   const socket = useContext(SocketContext)
-
-//   const toggleSoundMode = () => {
-//     setSoundMode(!soundMode);
-//   };
-
-//   useEffect(() => {
-//     if (currWordIdx === DEFAULT_WORDS_COUNT - 1) {
-//         const generatedEng = generateSentence(
-//           numberMode,
-//           symbolMode,
-//           DEFAULT_WORDS_COUNT,
-//         );
-//         setWordsList((currentArray) => [...currentArray, ...generatedEng]);
-//     }
-//     if (currWordIdx === limitStart-1 && currCharIdx + 2 === words[currWordIdx].length) return
-//   }, [currWordIdx, wordRefs, numberMode, symbolMode]);
-
-//   useEffect(() => {
-//     if (currMode === "words"){
-//       const generatedEng = generateSentence(
-//         numberMode,
-//         symbolMode,
-//         limitStart,
-//       );
-//       setWordsList(generatedEng);
-//     } else {
-//       const generatedEng = generateSentence(
-//         numberMode,
-//         symbolMode,
-//         DEFAULT_WORDS_COUNT,
-//       );
-//       setWordsList(generatedEng);
-//     }
-//   }, [currMode, limitStart])
-
-//   const reset = (newlimit, newnumberMode, newsymbolMode, isRedo, isCustom=false) => {
-//     setStatus("waiting");
-//     if (!isRedo) {
-//       if (currMode === "words"){
-//         setWordsList(generateSentence(newnumberMode, newsymbolMode, limitStart));
-//       } else {
-//         setWordsList(generateSentence(newnumberMode, newsymbolMode, DEFAULT_WORDS_COUNT));
-//       }
-//     }
-//     if (newlimit === ""){
-//       newlimit = 15;
-//     }
-//     setNumberMode(newnumberMode);
-//     setSymbolMode(newsymbolMode);
-//     setLimitStart(newlimit);
-//     setLimit(newlimit);
-//     clearInterval(intervalId);
-//     setWpm(0);
-//     setRaw(0);
-//     setWpmStrokes(0);
-//     setCurrInput("");
-//     setPrevInp("");
-//     setIntervalId(null);
-//     setCurrWordIdx(0);
-//     setCurrCharIdx(-1);
-//     setCurrChar("");
-//     setCharData({});
-//     setWordsHistory({});
-//     setCorrect(new Set());
-//     setIncorrect(new Set());
-//     if (!isCustom){
-//       textInputRef.current.focus();
-//     }
-//   };
 
   const start = () => {
     if (status === "finished") {
@@ -281,29 +153,11 @@ const GameInput = ({
 
   socket.on("leaderboard", data => {
     console.log(data)
-    toast.success(data[0]["username"])
+    setLeaderboardData(data.data)
   })
   useEffect(() => {
     if (status === "finished"){
-      // setLimit(limitStart);
-      // clearInterval(intervalId);
-      // setWpm(0);
-      // setRaw(0);
-      // setWpmStrokes(0);
-      // setCurrInput("");
-      // setPrevInp("");
-      // setIntervalId(null);
-      // setCurrWordIdx(0);
-      // setCurrCharIdx(-1);
-      // setCurrChar("");
-      // setCharData({});
-      // setWordsHistory({});
-      // setCorrect(new Set());
-      // setIncorrect(new Set());
       setRemStatsClass("rem-stats-wrapper")
-      if (window.localStorage.getItem("vt_login") !== "true"){
-        return;
-      }
       const testTime = parseInt(new Date().getTime() / 1000)
       const text = testTime.toString() + " " + currMode + " " + limitStart.toString()
       const md5Hash = md5(text)
@@ -320,6 +174,9 @@ const GameInput = ({
       const accuracy = correctChars === 0 ? 0 : (correctChars / totalChars) * 100;
       const payload = {"test_mode": currMode, "test_limit": limitStart, "wpm": Math.round(wpm * 100) / 100, "accuracy": Math.round(accuracy * 100) / 100, "test_time": testTime, "md5_hash": md5Hash}
       socket.emit("game-end", {"roomId": roomId, "username": username, "wpm": Math.round(wpm * 100) / 100, "accuracy": Math.round(accuracy * 100) / 100})
+      if (window.localStorage.getItem("vt_login") !== "true"){
+        return;
+      }
       fetch("http://127.0.0.1:5000/stats", {
         method: "POST",
         credentials: "include",
@@ -396,7 +253,6 @@ const GameInput = ({
 
     if (keyCode === 9) {
       e.preventDefault();
-    //   handleTab();
       return;
     }
 
@@ -568,160 +424,8 @@ const GameInput = ({
     }
   };
 
-  const getModeClass = (addon) => {
-    if (addon) {
-      return "active-button";
-    }
-    return "inactive-button";
-  };
-
-  const getTimerClass = (buttonTimerlimit) => {
-    if (limitStart === buttonTimerlimit) {
-      return "active-button";
-    }
-    return "inactive-button";
-  };
-
-  const getSoundClass = (mode) => {
-    if (mode) {
-      return "sound-button";
-    }
-    return "sound-button-deactive";
-  };
-
   return (
     <>
-      {/* <div className="restart-button" key="restart-button">
-          <Grid container justifyContent="center" alignItems="center">
-            <Box display="flex" flexDirection="row">
-                <>
-                  <IconButton
-                    style={{fontSize: "16px"}}
-                    onClick={() => {
-                      reset(
-                        limitStart,
-                        !numberMode,
-                        symbolMode,
-                        false
-                      );
-                    }}
-                  >
-                    <Tooltip
-                      title={
-                        NUMBER_TOOLTIP
-                      }
-                    >
-                      <span
-                        className={getModeClass(
-                          numberMode
-                        )}
-                      >
-                        {NUMBER}
-                      </span>
-                    </Tooltip>
-                  </IconButton>
-                  <IconButton
-                    style={{fontSize: "16px"}}
-                    onClick={() => {
-                      reset(
-                        limitStart,
-                        numberMode,
-                        !symbolMode,
-                        false
-                      );
-                    }}
-                  >
-                    <Tooltip
-                      title={
-                        SYMBOL_TOOLTIP
-                      }
-                    >
-                      <span
-                        className={getModeClass(
-                          symbolMode
-                        )}
-                      >
-                        {SYMBOL}
-                      </span>
-                    </Tooltip>
-                  </IconButton>
-                  <IconButton onClick={() => {}}>
-                    <span className="menu-separator"> | </span>
-                  </IconButton>
-                  <IconButton 
-                    style={{fontSize: "16px"}}
-                    onClick={() => setCurrMode("words")}>
-                    <span className={currMode == "words" ? "words-mode active-button" : "words-mode inactive-button"}>Words</span>
-                  </IconButton>
-                  <IconButton 
-                    style={{fontSize: "16px"}}
-                    onClick={() => setCurrMode("time")}>
-                    <span className={currMode == "time" ? "time-mode active-button" : "time-mode inactive-button"}>Time</span>
-                  </IconButton>
-                  <IconButton onClick={() => {}}>
-                    <span className="menu-separator"> | </span>
-                  </IconButton>
-                  <IconButton 
-                    onClick={toggleSoundMode} style={{marginTop: "0.3rem", fontSize: "16px"}}>
-                    <Tooltip title={SOUND_TOOLTIP}>
-                      <span className={getSoundClass(soundMode)}>
-                        <VolumeUpIcon fontSize="medium"></VolumeUpIcon>
-                      </span>
-                    </Tooltip>
-                  </IconButton>
-                </>
-            </Box>
-            <Box display="flex" flexDirection="row" alignItems="center">
-              <>
-                  <IconButton
-                    style={{fontSize: "16px"}}
-                    onClick={() => {
-                      reset(15, numberMode, symbolMode, false);
-                    }}
-                  >
-                    <span className={getTimerClass(15)}>
-                      {15}
-                    </span>
-                  </IconButton>
-
-                  <IconButton
-                    style={{fontSize: "16px"}}
-                    onClick={() => {
-                      reset(30, numberMode, symbolMode, false);
-                    }}
-                  >
-                    <span className={getTimerClass(30)}>
-                      {30}
-                    </span>
-                  </IconButton>
-
-                  <IconButton
-                    style={{fontSize: "16px"}}
-                    onClick={() => {
-                      reset(60, numberMode, symbolMode, false);
-                    }}
-                  >
-                    <span className={getTimerClass(60)}>
-                      {60}
-                    </span>
-                  </IconButton>
-
-                  <IconButton
-                    style={{fontSize: "16px"}}
-                    onClick={() => {
-                      reset(90, numberMode, symbolMode, false);
-                    }}
-                  >
-                    <span className={getTimerClass(90)}>
-                      {90}
-                    </span>
-                  </IconButton>
-                  <input onChange={(e) => reset(e.target.value, numberMode, symbolMode, false, true)} id="custom-limit-input" type="number" min={1} max={500} />
-              </>
-            </Box>
-            
-          </Grid>
-        </div> */}
         <div className={remStatsClass}>
           <div className="rem-stats">
             {
@@ -760,16 +464,25 @@ const GameInput = ({
             </div>
           )}
           <Keyboard isActive={keyboardActive} currKey={currKey}/>
-          <div className="stats">
-            <Stats
-              status={status}
-              wpm={wpm}
-              limitStart={limitStart}
-              charStats={charStats}
-              raw={raw}
-              currMode={currMode}
-            ></Stats>
+          {status === "finished" ? 
+          <div className="game-results-wrapper">
+            <div className="game-leaderboard">
+              <h2>Current Results</h2>
+              <div className="game-results">
+                {
+                  [...Array.from(leaderboardData.map(i => <GameResultUser username={i["username"]} wpm={Math.round(i["wpm"])} accuracy={Math.round(i["accuracy"])} rank={leaderboardData.indexOf(i) + 1} />))]
+                }
+              </div>
+            </div>
+            <div className="game-stats">
+              <GameStats
+                status={status}
+                wpm={wpm}
+                charStats={charStats}
+              ></GameStats>
+            </div>
           </div>
+          : "" }
           <input
             key="user-input"
             ref={textInputRef}
@@ -780,68 +493,10 @@ const GameInput = ({
             value={currInput}
             onChange={(e) => handleInput(e)}
           />
-          {/* <Dialog
-            PaperProps={{
-              style: {
-                backgroundColor: "transparent",
-                boxShadow: "none",
-              },
-            }}
-            open={restartDialog}
-            onKeyDown={tabEnterReset}
-          >
-            <DialogTitle>
-              <div>
-                <span className="dialog-text"> Press </span>
-                <span className="dialog-text-gray">Space</span>
-                <span className="dialog-text"> to redo</span>
-              </div>
-              <div>
-                <span className="dialog-text"> Press </span>
-                <span className="dialog-text-gray">Tab</span>{" "}
-                <span className="dialog-text">/</span>{" "}
-                <span className="dialog-text-gray">Enter</span>{" "}
-                <span className="dialog-text"> to restart</span>
-              </div>
-              <div>
-                <span className="dialog-text"> Press </span>
-                <span className="dialog-text-gray">K</span>{" "}
-                <span className="dialog-text"> to toggle on-screen keyboard</span>
-              </div>
-              <span className="dialog-text"> Press </span>
-              <span className="dialog-text-gray">any key</span>
-              <span className="dialog-text"> to exit</span>
-            </DialogTitle>
-          </Dialog> */}
         </div>
         <Grid container justifyContent="center" alignItems="center">
             <Box display="flex" flexDirection="row" style={{marginTop: "9rem"}}>
-              {/* <IconButton
-                style={{fontSize: "16px"}}
-                aria-label="redo"
-                color="primary"
-                size="medium"
-                onClick={() => {
-                  reset(limitStart, numberMode, symbolMode, true);
-                }}
-              >
-                <Tooltip title={REDO_TOOLTIP}>
-                  <UndoIcon />
-                </Tooltip>
-              </IconButton>
-              <IconButton
-                style={{fontSize: "16px"}}
-                aria-label="restart"
-                color="primary"
-                size="medium"
-                onClick={() => {
-                  reset(limitStart, numberMode, symbolMode, false);
-                }}
-              >
-                <Tooltip title={RESTART_TOOLTIP}>
-                  <RestartAltIcon />
-                </Tooltip>
-              </IconButton> */}
+              { status !== "finished" ? 
               <Tooltip title={KEYBOARD_TOOLTIP}>
                 <IconButton
                   id="keyboard-button"
@@ -856,6 +511,19 @@ const GameInput = ({
                   <FaRegKeyboard />
                 </IconButton>
               </Tooltip>
+              : <Tooltip title="Play again">
+                <IconButton
+                  id="play-again-button"
+                  style={{fontSize:"16px"}}
+                  aria-label="play-again"
+                  color="primary"
+                  size="medium"
+                  onClick={() => window.location.reload()}
+                  >
+                    <RestartAltIcon />
+                  </IconButton>
+              </Tooltip>
+                }
             </Box>
           </Grid>
           <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop={true} closeOnClick rtl={false} pauseOnHover theme="dark"/>
