@@ -578,7 +578,7 @@ class ForgotPasswordResource(Resource):
         if not email:
             return {"message": "Invalid username"}, 400
         email = email[0]
-        send_password_reset_email(username, 'techguy940@gmail.com')
+        send_password_reset_email(username, email)
         return {"message": "Email sent successfully"}, 200
 
 
