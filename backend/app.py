@@ -14,6 +14,9 @@ import pyotp
 import qrcode
 from io import BytesIO
 import base64
+from email.message import EmailMessage
+import smtplib
+import time
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
@@ -23,6 +26,8 @@ load_dotenv()
 
 secret_key = os.getenv('SECRET_KEY')
 database_url = os.getenv('DATABASE_URL')
+sender_email = os.getenv("SENDER_EMAIL")
+sender_password = os.getenv("SENDER_PASSWORD")
 
 sio = SocketIO(app, cors_allowed_origins=["http://localhost:3000"])
 from io import BytesIO
@@ -36,6 +41,32 @@ def generate_words(n):
     for i in range(n):
         words.append(word_list[random.randint(0, length-1)])
     return words
+
+def send_password_reset_email(username, r_email):
+
+    jwt_payload = {
+        "name": username,
+        "email": r_email,
+        "exp": int(time.time() + 10*60) # 10 minutes expiry
+    }
+
+    token = jwt.encode(jwt_payload, secret_key, algorithm="HS256")
+    link = f"http://localhost:3000/reset-password?token={token}"
+
+    message = f"Click the link to reset your password: {link}"
+
+    email = EmailMessage()
+    email["From"] = sender_email
+    email["To"] = r_email
+    email["Subject"] = "Password Reset"
+    email.set_content(message)
+
+    smtp = smtplib.SMTP("smtp-mail.outlook.com", port=587)
+    smtp.starttls()
+    smtp.login(sender_email, sender_password)
+    smtp.sendmail(sender_email, r_email, email.as_string())
+    smtp.quit()
+
 
 @sio.on("join-room")
 def handle_room_join(data):
@@ -531,6 +562,52 @@ class VerifyTwoFactor(Resource):
         return response
 
 
+class ForgotPasswordResource(Resource):
+    def post(self):
+        username = request.json.get("name")
+        if not username:
+            return {"message": "Username can not be empty"}, 400
+
+        conn = connect_to_database()
+        if conn is None:
+            return {"message": "Error connecting to database"}, 500
+
+        cursor = conn.cursor()
+        cursor.execute("SELECT email FROM users WHERE name = %s", (username, ))
+        email = cursor.fetchone()
+        if not email:
+            return {"message": "Invalid username"}, 400
+        email = email[0]
+        send_password_reset_email(username, 'techguy940@gmail.com')
+        return {"message": "Email sent successfully"}, 200
+
+
+class ResetPasswordResource(Resource):
+    def post(self):
+        jwt_token = request.json.get("token")
+        password = request.json.get("password")
+        if jwt_token is None:
+            return {"message": "Unauthorized"}, 401
+
+        try:
+            payload = jwt.decode(jwt_token, secret_key, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return {"message": "Token has expired"}, 401
+        except jwt.InvalidTokenError:
+            return {"message": "Invalid token"}, 401
+
+
+        name = payload.get("name")
+        conn = connect_to_database()
+        if conn is None:
+            return {"message": "Error connecting to database"}, 500
+
+        cursor = conn.cursor()
+        pass_hash = hashlib.sha256(password.encode()).hexdigest()
+        cursor.execute("UPDATE users SET pass_hash = %s WHERE name = %s", (pass_hash, name))
+        conn.commit()
+        cursor.close()
+        return {"message": "Password changed successfully"}, 200
 
 api.add_resource(RegisterResource, '/register')
 api.add_resource(LoginResource, '/login')
@@ -539,6 +616,8 @@ api.add_resource(ProfileResource, '/profile')
 api.add_resource(LeaderboardResource, '/leaderboard')
 api.add_resource(VerifyTwoFactor, '/verify-two-factor')
 api.add_resource(ResultResource, '/result')
+api.add_resource(ForgotPasswordResource, '/forgot-password')
+api.add_resource(ResetPasswordResource, '/reset-password')
 
 
 if __name__ == '__main__':
