@@ -1,0 +1,9 @@
+Flask
+flask-restful
+pyjwt
+psycopg2
+flask-cors
+python-dotenv
+flask-socketio
+pyotp
+qrcode
