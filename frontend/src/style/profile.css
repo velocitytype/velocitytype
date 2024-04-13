@@ -52,7 +52,9 @@ body {
     overflow: auto;
     height: 100vh;
 }
-
+.profile-wrapper h1 {
+    color: var(--primary);
+}
 .username-header{
     display: flex;
     flex-direction: column;
@@ -163,6 +165,9 @@ body {
         padding-left: 0.5rem;
         padding-right: 0.5rem;
         font-size: 12px;
+    }
+    .username-logout {
+        flex-direction: column;
     }
 }
 

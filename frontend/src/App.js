@@ -21,6 +21,7 @@ import Registration from "./components/Registration";
 import Leaderboard from "./components/Leaderboard";
 import UserProfile from "./components/UserProfile";
 import Multiplayer from "./components/Multiplayer";
+import ResetPassword from "./components/ResetPassword";
 import { SocketProvider } from "./components/SocketContext";
 import SharedResult from "./components/SharedResult";
 import NotFound from "./components/NotFound";
@@ -134,6 +135,18 @@ function NotFoundPage(){
   )
 }
 
+function ResetPasswordPage(){
+  return (
+    <ThemeProvider theme={theme}>
+      <>
+        <div className="reset-password-canvas">
+          <ResetPassword />
+        </div>
+      </>
+    </ThemeProvider>
+  )
+}
+
 function App() {
   return (
     // Set up routing
@@ -146,6 +159,7 @@ function App() {
         <Route path="/profile" element={<UserProfilePage />} />
         <Route path="/game" element={<MultiplayerPage />} />
         <Route path="/results/:id" element={<SharedResultPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Router>

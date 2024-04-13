@@ -102,15 +102,13 @@ function UserProfile(){
             .then(res => res.json())
             .then(data => {
                 if (data.message === "2FA disabled successfully"){
-                    toast(data.message)
+                    toast.success(data.message)
                     setEnabled(false)
                     setDialog(false)
                     return;
                 }
             })
             .catch(e => toast.error(e.toString()))
-
-        
     }
     return (
         <>
@@ -122,8 +120,8 @@ function UserProfile(){
                         <p>{userData.email}</p>
                     </div>
                     <div className="username-logout">
-                        <button onClick={handleLogout}>Logout</button>
                         <button onClick={handle2FA}>2FA Settings</button>
+                        <button onClick={handleLogout}>Logout</button>
                     </div>
                 </div>
                 <div className="separator"></div>
@@ -175,7 +173,11 @@ function UserProfile(){
                 onKeyDown={handleKeyDown}
             >
                 <DialogTitle>
-                    {enabled ? <button id="disable-2fa" onClick={disable2FA}>Disable 2FA</button> : <img height={400} width={400} src={qr} />}
+                    {enabled ? <button id="disable-2fa" onClick={disable2FA}>Disable 2FA</button> : 
+                    <>
+                        <h1 style={{color: "var(--primary)"}}>Scan QR Code</h1>
+                        <img height={400} width={400} src={qr} />
+                    </>}
                 </DialogTitle>
             </Dialog>
             <ToastContainer position="top-right" autoClose={2500} hideProgressBar={false} newestOnTop={true} closeOnClick rtl={false} pauseOnHover theme="dark"/>

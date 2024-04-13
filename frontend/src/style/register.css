@@ -91,6 +91,12 @@ body {
     border: 1px solid var(--primary);
 }
 
+#login-form input::-webkit-outer-spin-button,
+#login-form input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 #register-form button,
 #login-form button{
     border: none;
@@ -107,6 +113,23 @@ body {
     background: #9b4aff;
     transition: 150ms ease-in-out;
 }
+
+#login-form div {
+    display: flex;
+    justify-content: center;
+}
+
+#login-form a {
+    color: white;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#login-form a:hover {
+    color: var(--primary);
+    transition: 250ms ease-in-out;
+}
+
 
 @media(max-width: 720px){
     body{

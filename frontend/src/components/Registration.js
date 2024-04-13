@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "./Header";
 import '../style/register.css';
 import {useNavigate} from "react-router-dom"
@@ -103,6 +103,29 @@ function Registration(){
             toast.error(e.toString())
         })
     }
+
+    function handleForgotPassword() {
+        if (usernameRef.current.value === ""){
+            toast.error("Username can not be empty")
+            return;
+        }
+        toast.info("Sending password reset mail...")
+        fetch("http://127.0.0.1:5000/forgot-password", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({name: usernameRef.current.value})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.message === "Email sent successfully"){
+                toast.success(data.message)
+                return
+            }
+            toast.error(data.message)
+        })
+        .catch(e => toast.error(e.toString()))
+    }
+    const usernameRef = useRef(null)
     return (
         <>
             <Header />
@@ -123,11 +146,14 @@ function Registration(){
                     <h1>Login</h1>
                     <form id="login-form" onSubmit={(e) => handleLogin(e)}>
                         <section>
-                            <input type="text" placeholder="Username" />
+                            <input type="text" placeholder="Username" ref={usernameRef}/>
                             <input type="password" placeholder="Password" />
                             {twoFa ? <input type="number" placeholder="2FA OTP" /> : ""}
                         </section>
                         <button type="submit">Login</button>
+                        <div>
+                            <a id="forgot-password-btn" onClick={handleForgotPassword}>Forgot Password?</a>
+                        </div>
                     </form>
                 </div>
             </div>
