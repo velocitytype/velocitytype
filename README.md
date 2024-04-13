@@ -16,6 +16,7 @@ VelocityType is a website which measures your typing speed in wpm (words per min
 12. Keyboard shortcuts to make tasks easier
 13. Multiplayer mode with words and time mode, along with a leaderboard
 14. Auto-save results on test finish
+15. 2-Factor Authentication feature
 
 # Tech Stack
 
